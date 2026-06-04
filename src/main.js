@@ -23,6 +23,7 @@ const state = {
   supabaseUser: null,
   customCategories: JSON.parse(localStorage.getItem('bm_custom_categories')) || [],
   customItems: JSON.parse(localStorage.getItem('bm_custom_items')) || [],
+  deletedItems: JSON.parse(localStorage.getItem('bm_deleted_items')) || [],
   adminTab: 'dashboard',
   memberDetailId: null,
 };
@@ -90,7 +91,9 @@ function getAllItems() {
   state.customItems.forEach(ci => {
     items.push({ ...ci, _custom: true });
   });
-  return items;
+  
+  // Filter out deleted items
+  return items.filter(item => !state.deletedItems.includes(item.name));
 }
 
 // === FORMAT ===
@@ -462,6 +465,7 @@ window.__openModal = function (idx) {
       <div class="modal-price">${item.price ? formatFullPrice(item.price) : 'N/A'}</div>
       <div class="modal-actions">
         <button class="btn-secondary" onclick="window.__copyInfo(${idx})">📋 복사</button>
+        ${state.isAdmin ? `<button class="btn-danger-sm" onclick="window.__deleteItem(${idx})" style="padding:10px 16px; font-size:0.8rem; margin-right:auto;">🗑️ 삭제</button>` : ''}
         ${item.price ? `<button class="btn-secondary" onclick="window.__addToCart(${idx})" style="color:var(--cyan);border-color:var(--cyan)">🛒 담기</button>
         <button class="btn-primary" onclick="window.__purchaseNow(${idx})">PURCHASE</button>` : ''}
       </div>
@@ -476,6 +480,35 @@ window.__copyInfo = function (idx) {
   if (!item) return;
   const text = `[${item.grade}] ${item.name}\n가격: ${formatFullPrice(item.price)}\n${item.description || ''}`;
   navigator.clipboard?.writeText(text).then(() => window.__toast('클립보드에 복사되었습니다.'));
+};
+
+window.__deleteItem = function (idx) {
+  if (!state.isAdmin) return;
+  const item = state.filteredItems[idx];
+  if (!item) return;
+  
+  if (confirm(`정말 "${item.name}" 품목을 상점에서 삭제하시겠습니까?`)) {
+    if (item._custom) {
+      state.customItems = state.customItems.filter(ci => ci.id !== item.id);
+      saveCustomData();
+    } else {
+      state.deletedItems.push(item.name);
+      localStorage.setItem('bm_deleted_items', JSON.stringify(state.deletedItems));
+    }
+    
+    closeModal();
+    state.allItems = getAllItems();
+    document.getElementById('total-items').textContent = state.allItems.length;
+    applyFilters();
+    renderNav();
+    
+    if (state.adminTab === 'products') {
+      const body = document.getElementById('admin-body');
+      if (body) renderProductsTab(body);
+    }
+    
+    window.__toast(`"${item.name}" 품목이 삭제되었습니다.`);
+  }
 };
 
 window.__toast = function (msg) {
