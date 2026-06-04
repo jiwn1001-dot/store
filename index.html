@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="네오서울 지하시장 - 무기, 사이버웨어, 소모품 암시장 거래소. 용산에서 삼성까지, 당신이 필요한 모든 것." />
+  <title>黒市場 // BLACKMARKET — 네오서울 딥넷 거래소</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔫</text></svg>">
+  <link rel="stylesheet" href="/src/style.css" />
+  <script src="https://js.tosspayments.com/v1/payment"></script>
+</head>
+<body>
+  <div id="scanlines"></div>
+  <div id="glitch-overlay"></div>
+  
+  <!-- Header -->
+  <header id="main-header">
+    <div class="header-inner">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="메뉴 열기">☰</button>
+      <div class="logo-area" id="logo-area">
+        <div class="logo-glitch" data-text="黒市場">黒市場</div>
+        <div class="logo-sub">BLACKMARKET<span class="blink">_</span></div>
+        <div class="logo-status">
+          <span class="status-dot"></span>
+          <span>SECURE CONNECTION • TOR NODE 7X-KR</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="search-box" id="search-box">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="search-input" placeholder="검색어 입력... (품목, 등급, 키워드)" autocomplete="off" />
+          <kbd>ESC</kbd>
+        </div>
+        <div class="header-stats">
+          <div class="stat-item">
+            <span class="stat-label">ITEMS</span>
+            <span class="stat-value" id="total-items">0</span>
+          </div>
+          <div class="auth-area" id="auth-area">
+            <button class="header-icon-btn" id="login-btn">
+              <span class="header-icon">🔑</span>
+              <span class="header-icon-text">로그인</span>
+            </button>
+          </div>
+          <button class="header-icon-btn" id="orders-toggle-btn" aria-label="주문내역 열기">
+            <span class="header-icon">📜</span>
+            <span class="header-icon-text">주문내역</span>
+          </button>
+          <button class="cart-btn" id="cart-toggle-btn" aria-label="장바구니 열기">
+            <span class="cart-icon">🛒</span>
+            <span class="cart-count" id="cart-count">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div id="app-container">
+    <!-- Sidebar Backdrop (mobile) -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">▸ 카탈로그</span>
+        <button class="sidebar-toggle" id="sidebar-toggle" aria-label="메뉴 닫기">✕</button>
+      </div>
+      <nav id="category-nav"></nav>
+    </aside>
+
+    <!-- Product Grid -->
+    <main id="main-content">
+      <!-- Breadcrumb -->
+      <div id="breadcrumb" class="breadcrumb">
+        <span class="bc-item" data-action="home">黒市場</span>
+      </div>
+      
+      <!-- Filter Bar -->
+      <div id="filter-bar" class="filter-bar">
+        <div class="filter-left">
+          <span class="result-count" id="result-count">0개 품목</span>
+          <div class="grade-filters" id="grade-filters"></div>
+        </div>
+        <div class="filter-right">
+          <select id="sort-select" class="sort-select">
+            <option value="price-asc">가격 낮은순</option>
+            <option value="price-desc">가격 높은순</option>
+            <option value="grade-asc">등급 낮은순</option>
+            <option value="grade-desc">등급 높은순</option>
+            <option value="name">이름순</option>
+          </select>
+          <div class="view-toggle">
+            <button class="view-btn active" data-view="grid" id="view-grid" aria-label="그리드 보기">▦</button>
+            <button class="view-btn" data-view="list" id="view-list" aria-label="리스트 보기">☰</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Grid -->
+      <div id="items-container" class="items-grid"></div>
+
+      <!-- Pagination -->
+      <div id="pagination" class="pagination"></div>
+    </main>
+  </div>
+
+  <!-- Item Detail Modal -->
+  <div id="item-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" id="modal-content">
+      <button class="modal-close" id="modal-close" aria-label="닫기">✕</button>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div id="cart-drawer-backdrop" class="sidebar-backdrop"></div>
+  <div id="cart-drawer" class="cart-drawer">
+    <div class="cart-header">
+      <span class="cart-title">▸ 장바구니 // CART</span>
+      <button class="cart-close" id="cart-close" aria-label="장바구니 닫기">✕</button>
+    </div>
+    <div class="cart-body" id="cart-items-container">
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <div class="empty-text">장바구니가 비어있습니다.</div>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span class="total-label">TOTAL</span>
+        <span class="total-price" id="cart-total-price">0</span><span class="currency"> ₩</span>
+      </div>
+      <button class="btn-primary checkout-btn" id="cart-checkout-btn">CHECKOUT</button>
+    </div>
+  </div>
+
+  <!-- Order History Modal -->
+  <div id="orders-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content orders-modal-content">
+      <button class="modal-close" id="orders-close" aria-label="닫기">✕</button>
+      <div class="modal-header">
+        <div class="modal-name">주문 내역</div>
+        <div class="modal-category">최근 거래 기록</div>
+      </div>
+      <div class="orders-body" id="orders-container">
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          <div class="empty-text">주문 내역이 없습니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-content login-modal-content">
+      <button class="modal-close" id="login-close" aria-label="닫기">✕</button>
+      <div class="modal-header">
+        <div class="modal-name">시스템 인증</div>
+        <div class="modal-category">미등록 ID는 자동 가입됩니다.</div>
+      </div>
+      <div class="login-body">
+        <div class="input-group">
+          <label for="login-id">IDENTIFIER (ID)</label>
+          <input type="text" id="login-id" placeholder="아이디 입력" autocomplete="off" />
+        </div>
+        <div class="input-group">
+          <label for="login-pw">SECURITY KEY (PW)</label>
+          <input type="password" id="login-pw" placeholder="비밀번호 입력" />
+        </div>
+        <button class="btn-primary btn-full login-submit-btn" id="login-submit-btn">ACCESS / REGISTER</button>
+        <div class="login-divider"><span>또는</span></div>
+        <button class="btn-google" id="google-login-btn">
+          <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Google로 로그인
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel Full Overlay -->
+  <div id="admin-panel" class="admin-panel" style="display:none;">
+    <div class="admin-container">
+      <div class="admin-panel-header">
+        <div class="admin-header-left">
+          <span class="admin-logo">⚙️</span>
+          <div>
+            <div class="admin-title-text">ADMIN PANEL</div>
+            <div class="admin-subtitle">시스템 관리 콘솔</div>
+          </div>
+        </div>
+        <button class="modal-close" id="admin-close">✕</button>
+      </div>
+      <div class="admin-tabs" id="admin-tabs">
+        <button class="admin-tab active" data-tab="dashboard">📊 대시보드</button>
+        <button class="admin-tab" data-tab="products">📦 상품관리</button>
+        <button class="admin-tab" data-tab="members">👥 회원관리</button>
+        <button class="admin-tab" data-tab="revenue">💰 정산/매출</button>
+      </div>
+      <div class="admin-body" id="admin-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
